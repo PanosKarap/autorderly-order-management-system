@@ -1,91 +1,71 @@
-﻿using FirstProjectAPI.Data;
-using FirstProjectAPI.DTOs;
-using FirstProjectAPI.Models;
+﻿using FirstProjectAPI.DTOs;
+using FirstProjectAPI.Interfaces;
+using FirstProjectAPI.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace FirstProjectAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Roles = "StoreOwner")] // Κλειδωμένο για μαγαζιά
     public class CategoriesController : ControllerBase
     {
-        private readonly AppDbContext _context;
+        private readonly ICategoryService _categoryService;
 
-        public CategoriesController(AppDbContext context)
+        public CategoriesController(ICategoryService categoryService)
         {
-            _context = context;
+            _categoryService = categoryService;
         }
 
-        [HttpPost("Create")]
-        public async Task<IActionResult> CreateCategory(CategoryCreateDto dto)
-        {
-            var exists = await _context.Categories
-                .AnyAsync(c => c.UserId == dto.UserId && c.Name == dto.Name);
-            if (exists) {
-                return BadRequest(new { Message = "Υπάρχει ήδη κατηγορία με αυτό το όνομα για αυτόν τον χρήστη." });
-            }
+        // Helper μέθοδος για να παίρνουμε το UserId από το Token
+        private string GetUserId() => User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
-            var category = new Category
-            {
-                Name = dto.Name,
-                UserId = dto.UserId
-            };
-
-            _context.Categories.Add(category);
-            await _context.SaveChangesAsync();
-
-            return Ok(new { Message = "Η κατηγορία δημιουργήθηκε!", Id = category.Id });
-        }
-
+        // --- GET: api/Categories/All ---
         [HttpGet("All")]
-        public async Task<ActionResult> GetAllCategories(string userId)
+        public async Task<IActionResult> GetAll()
         {
-            var categories = await _context.Categories
-                .Where(c => c.UserId == userId)
-                .ToListAsync();
-
-            var response = categories.Select(c => new CategoryResponseDto
-            {
-                Id = c.Id,
-                Name = c.Name
-            }).ToList();
-
-            return Ok(response);
+            var categories = await _categoryService.GetAllByUserIdAsync(GetUserId());
+            return Ok(categories);
         }
 
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteCategory(int id, string userId)
+        // --- POST: api/Categories/Create ---
+        [HttpPost("Create")]
+        public async Task<IActionResult> Create([FromBody] CategoryCreateDto dto)
         {
-            var category = await _context.Categories
-                .FirstOrDefaultAsync(c => c.UserId == userId && c.Id == id);
+            var userId = GetUserId();
 
-            if (category == null)
-                return NotFound(new { Message = "Η κατηγορία δεν βρέθηκε για αυτόν τον χρήστη." });
+            if (await _categoryService.ExistsAsync(userId, dto.Name))
+                return BadRequest(new { Message = "Υπάρχει ήδη κατηγορία με αυτό το όνομα." });
 
-            _context.Categories.Remove(category);
-            await _context.SaveChangesAsync();
-
-            return Ok(new { Message = "Η κατηγορία διαγράφηκε επιτυχώς." });
+            await _categoryService.CreateAsync(dto, userId);
+            return Ok(new { Message = "Η κατηγορία δημιουργήθηκε επιτυχώς!"});
         }
 
-        [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateCategory(int id, [FromBody] CategoryUpdateDto dto)
+        // --- PUT: api/Categories/Update/5 ---
+        [HttpPut("Update/{id}")]
+        public async Task<IActionResult> Update(int id, [FromBody] CategoryUpdateDto dto)
         {
-            var category = await _context.Categories
-                    .FirstOrDefaultAsync(c => c.Id == id && c.UserId == dto.UserId);
-            if (category == null)
-                return NotFound(new { Message = "Η κατηγορία δεν βρέθηκε για αυτόν τον χρήστη." });
+            var userId = GetUserId();
 
-            var exists = await _context.Categories
-                .AnyAsync(c => c.UserId == dto.UserId && c.Name == dto.NewName && c.Id != id);
-            if (exists)
-                return BadRequest(new { Message = "Υπάρχει ήδη άλλη κατηγορία με αυτό το όνομα." });
+            if (await _categoryService.ExistsAsync(userId, dto.NewName, id))
+                return BadRequest(new { Message = "Το όνομα χρησιμοποιείται ήδη σε άλλη κατηγορία." });
 
-            category.Name = dto.NewName;
-            await _context.SaveChangesAsync();
+            var success = await _categoryService.UpdateAsync(id, dto, userId);
+            if (!success) return NotFound(new { Message = "Η κατηγορία δεν βρέθηκε ή δεν έχετε δικαίωμα πρόσβασης." });
 
-            return Ok(new { Message = "Η κατηγορία ενημερώθηκε επιτυχώς.", NewName = category.Name });
+            return Ok(new { Message = "Το όνομα της κατηγορίας ενημερώθηκε." });
+        }
+
+        // --- DELETE: api/Categories/Delete/5 ---
+        [HttpDelete("Delete/{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var success = await _categoryService.DeleteAsync(id, GetUserId());
+            if (!success) return NotFound(new { Message = "Η κατηγορία δεν βρέθηκε ή δεν έχετε δικαίωμα πρόσβασης." });
+
+            return Ok(new { Message = "Η κατηγορία διαγράφηκε οριστικά." });
         }
     }
 }

@@ -17,8 +17,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddScoped<IAuthService, AuthService>();
-// Σύνδεση του Interface με την υλοποίηση (Dependency Injection)
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<ICategoryService, CategoryService>();
 
 // Ρυθμίσεις για το Swagger (Swashbuckle) με υποστήριξη JWT
 builder.Services.AddSwaggerGen(options =>
