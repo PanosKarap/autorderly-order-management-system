@@ -1,9 +1,10 @@
-﻿using Microsoft.EntityFrameworkCore;
-using FirstProjectAPI.Models; // Βάλε το σωστό namespace των Models σου
+﻿using FirstProjectAPI.Models; // Βάλε το σωστό namespace των Models σου
+using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
 namespace FirstProjectAPI.Data
 {
-    public class AppDbContext : DbContext
+    public class AppDbContext : IdentityDbContext<ApplicationUser>
     {
         // Ο constructor που παίρνει τις ρυθμίσεις (π.χ. το Connection String) από το Program.cs
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
