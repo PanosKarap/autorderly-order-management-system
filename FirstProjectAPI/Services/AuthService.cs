@@ -5,8 +5,9 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using FirstProjectAPI.DTOs.Login;
+using FirstProjectAPI.Interfaces;
 
-namespace FirstProjectAPI.Services.Login
+namespace FirstProjectAPI.Services
 {
     public class AuthService : IAuthService
     {

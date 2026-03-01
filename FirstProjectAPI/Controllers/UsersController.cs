@@ -1,7 +1,5 @@
-﻿using FirstProjectAPI.DTOs;
-using FirstProjectAPI.DTOs.Register;
-using FirstProjectAPI.Services;
-using FirstProjectAPI.Services.Register;
+﻿using FirstProjectAPI.DTOs.Register;
+using FirstProjectAPI.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,33 +7,60 @@ namespace FirstProjectAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Roles = "Admin")]
     public class UsersController : ControllerBase
     {
-        private readonly IRegisterService _registerService;
+        private readonly IUserService _userService;
 
-        public UsersController(IRegisterService registerService)
+        public UsersController(IUserService userService)
         {
-            _registerService = registerService;
+            _userService = userService;
         }
 
-        [HttpPost("RegisterClient")]
-        [Authorize(Roles = "Admin")]
+        [HttpPost("RegisterUser")]
         public async Task<IActionResult> Register([FromBody] RegisterDto dto)
         {
-            var result = await _registerService.RegisterAsync(dto);
+            var result = await _userService.RegisterAsync(dto);
 
             if (!result.Succeeded)
             {
                 return BadRequest(result.Errors);
             }
 
-            var response = new RegisterResponseDto
-            {
-                Email = dto.Email,
-                StoreName = dto.StoreName
-            };
+            return Ok(new { Message = $"Το μαγαζί '{dto.StoreName}' δημιουργήθηκε με επιτυχία!" });
+        }
 
-            return Ok(response);
+        [HttpGet("AllUsers")]
+        public async Task<IActionResult> GetAll()
+        {
+            var stores = await _userService.GetAllStoresAsync();
+            return Ok(stores);
+        }
+
+        [HttpPut("UpdateUser")]
+        public async Task<IActionResult> Update([FromBody] RegisterResponseDto dto)
+        {
+            var result = await _userService.UpdateStoreAsync(dto);
+
+            if (!result.Succeeded)
+            {
+                return BadRequest(result.Errors);
+            }
+
+            return Ok(new { Message = "Τα στοιχεία του μαγαζιού ενημερώθηκαν επιτυχώς!", Data = dto });
+        }
+
+        [HttpDelete("DeleteUser/{email}")]
+        public async Task<IActionResult> Delete(string email)
+        {
+            var result = await _userService.DeleteStoreAsync(email);
+
+            if (!result.Succeeded)
+            {
+                return BadRequest(result.Errors);
+            }
+
+            return Ok(new { Message = $"Το μαγαζί με email {email} διαγράφηκε." });
         }
     }
 }

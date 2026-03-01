@@ -1,7 +1,7 @@
 using FirstProjectAPI.Data;
+using FirstProjectAPI.Interfaces;
 using FirstProjectAPI.Models;
-using FirstProjectAPI.Services.Login;
-using FirstProjectAPI.Services.Register;
+using FirstProjectAPI.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -18,7 +18,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddScoped<IAuthService, AuthService>();
 // Σύνδεση του Interface με την υλοποίηση (Dependency Injection)
-builder.Services.AddScoped<IRegisterService, RegisterService>();
+builder.Services.AddScoped<IUserService, UserService>();
 
 // Ρυθμίσεις για το Swagger (Swashbuckle) με υποστήριξη JWT
 builder.Services.AddSwaggerGen(options =>

@@ -1,6 +1,6 @@
 ﻿using FirstProjectAPI.DTOs.Login;
 
-namespace FirstProjectAPI.Services.Login
+namespace FirstProjectAPI.Interfaces
 {
     public interface IAuthService
     {
