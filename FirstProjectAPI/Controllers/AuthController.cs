@@ -1,5 +1,5 @@
-﻿using FirstProjectAPI.DTOs;
-using FirstProjectAPI.Interfaces;
+﻿using FirstProjectAPI.DTOs.Login;
+using FirstProjectAPI.Services.Login;
 using Microsoft.AspNetCore.Mvc;
 
 [Route("api/[controller]")]

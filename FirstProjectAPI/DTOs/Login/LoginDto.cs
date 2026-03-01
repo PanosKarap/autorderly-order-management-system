@@ -1,4 +1,4 @@
-﻿namespace FirstProjectAPI.DTOs
+﻿namespace FirstProjectAPI.DTOs.Login
 {
     public class LoginDto
     {

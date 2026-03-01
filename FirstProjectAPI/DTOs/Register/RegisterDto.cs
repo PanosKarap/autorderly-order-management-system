@@ -1,4 +1,4 @@
-﻿namespace FirstProjectAPI.DTOs
+﻿namespace FirstProjectAPI.DTOs.Register
 {
     public class RegisterDto
     {

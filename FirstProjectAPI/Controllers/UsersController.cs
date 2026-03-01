@@ -1,7 +1,8 @@
 ﻿using FirstProjectAPI.DTOs;
-using FirstProjectAPI.Models;
+using FirstProjectAPI.DTOs.Register;
+using FirstProjectAPI.Services;
+using FirstProjectAPI.Services.Register;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FirstProjectAPI.Controllers
@@ -10,38 +11,31 @@ namespace FirstProjectAPI.Controllers
     [ApiController]
     public class UsersController : ControllerBase
     {
-        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IRegisterService _registerService;
 
-        // Ζητάμε από το σύστημα να μας φέρει τον διαχειριστή χρηστών (Dependency Injection)
-        public UsersController(UserManager<ApplicationUser> userManager)
+        public UsersController(IRegisterService registerService)
         {
-            _userManager = userManager;
+            _registerService = registerService;
         }
 
         [HttpPost("RegisterClient")]
-        [Authorize(Roles = "Admin")] // <--- ΜΟΝΟ Ο ADMIN ΠΕΡΝΑΕΙ ΑΠΟ ΕΔΩ!
-        public async Task<IActionResult> CreateClient([FromBody] RegisterDto dto)
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Register([FromBody] RegisterDto dto)
         {
-            // 1. Δημιουργούμε τον νέο χρήστη/μαγαζί
-            var newUser = new ApplicationUser
+            var result = await _registerService.RegisterAsync(dto);
+
+            if (!result.Succeeded)
             {
-                UserName = dto.Email,
+                return BadRequest(result.Errors);
+            }
+
+            var response = new RegisterResponseDto
+            {
                 Email = dto.Email,
                 StoreName = dto.StoreName
             };
 
-            // 2. Τον αποθηκεύουμε στη βάση με τον κωδικό του
-            var result = await _userManager.CreateAsync(newUser, dto.Password);
-
-            if (result.Succeeded)
-            {
-                // 3. Του δίνουμε τον ρόλο του απλού μαγαζιού
-                await _userManager.AddToRoleAsync(newUser, "StoreOwner");
-                return Ok(new { Message = $"Το μαγαζί '{dto.StoreName}' δημιουργήθηκε επιτυχώς!" });
-            }
-
-            // Αν κάτι πάει λάθος (π.χ. αδύναμος κωδικός ή υπάρχει ήδη το email)
-            return BadRequest(result.Errors);
+            return Ok(response);
         }
     }
 }
