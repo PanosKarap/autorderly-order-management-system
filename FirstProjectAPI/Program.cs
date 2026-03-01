@@ -1,5 +1,7 @@
 using FirstProjectAPI.Data;
+using FirstProjectAPI.Interfaces;
 using FirstProjectAPI.Models;
+using FirstProjectAPI.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -14,6 +16,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddScoped<IAuthService, AuthService>();
 
 // Ρυθμίσεις για το Swagger (Swashbuckle) με υποστήριξη JWT
 builder.Services.AddSwaggerGen(options =>

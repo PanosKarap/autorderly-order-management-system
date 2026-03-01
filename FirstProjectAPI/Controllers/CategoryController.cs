@@ -17,7 +17,7 @@ namespace FirstProjectAPI.Controllers
             _context = context;
         }
 
-        [HttpPost]
+        [HttpPost("Create")]
         public async Task<IActionResult> CreateCategory(CategoryCreateDto dto)
         {
             var exists = await _context.Categories

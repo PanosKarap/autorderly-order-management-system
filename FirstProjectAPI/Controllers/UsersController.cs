@@ -18,7 +18,7 @@ namespace FirstProjectAPI.Controllers
             _userManager = userManager;
         }
 
-        [HttpPost("create-client")]
+        [HttpPost("RegisterClient")]
         [Authorize(Roles = "Admin")] // <--- ΜΟΝΟ Ο ADMIN ΠΕΡΝΑΕΙ ΑΠΟ ΕΔΩ!
         public async Task<IActionResult> CreateClient([FromBody] RegisterDto dto)
         {
