@@ -15,6 +15,13 @@ namespace FirstProjectAPI.Services
             _context = context;
         }
 
+        // Βοηθητική μέθοδος για έλεγχο διπλοεγγραφών
+        public async Task<bool> ExistsAsync(string userId, string name, int? excludeId = null)
+        {
+            return await _context.Categories
+                .AnyAsync(c => c.UserId == userId && c.Name == name && c.Id != excludeId);
+        }
+
         // 1. Προβολή όλων των κατηγοριών του συγκεκριμένου χρήστη
         public async Task<IEnumerable<CategoryResponseDto>> GetAllByUserIdAsync(string userId)
         {
@@ -27,44 +34,59 @@ namespace FirstProjectAPI.Services
         // 2. Δημιουργία κατηγορίας
         public async Task<CategoryResponseDto> CreateAsync(CategoryCreateDto dto, string userId)
         {
-            var category = new Category { Name = dto.Name, UserId = userId };
+            if (await ExistsAsync(userId, dto.Name))
+            {
+                throw new InvalidOperationException("Υπάρχει ήδη κατηγορία με αυτό το όνομα.");
+            }
+            var category = new Category
+            {
+                Name = dto.Name,
+                UserId = userId
+            };
             _context.Categories.Add(category);
             await _context.SaveChangesAsync();
-
             return new CategoryResponseDto { Id = category.Id, Name = category.Name };
         }
 
-        // 3. Επεξεργασία ονόματος
-        public async Task<bool> UpdateAsync(int id, CategoryUpdateDto dto, string userId)
+        // 3. Επεξεργασία ονόματος κατηγορίας
+        public async Task<CategoryResponseDto> UpdateAsync(int id, CategoryUpdateDto dto, string userId)
         {
             var category = await _context.Categories
                 .FirstOrDefaultAsync(c => c.Id == id && c.UserId == userId);
+            if (category == null)
+            {
+                throw new KeyNotFoundException("Η κατηγορία δεν βρέθηκε.");
+            }
 
-            if (category == null) return false;
+            if (await ExistsAsync(userId, dto.NewName, id))
+            {
+                throw new InvalidOperationException("Υπάρχει ήδη άλλη κατηγορία με αυτό το όνομα.");
+            }
 
             category.Name = dto.NewName;
             await _context.SaveChangesAsync();
-            return true;
+            return new CategoryResponseDto
+            {
+                Id = category.Id,
+                Name = category.Name
+            };
         }
 
         // 4. Διαγραφή κατηγορίας
-        public async Task<bool> DeleteAsync(int id, string userId)
+        public async Task DeleteAsync(int id, string userId)
         {
             var category = await _context.Categories
                 .FirstOrDefaultAsync(c => c.Id == id && c.UserId == userId);
+            if (category == null) throw new KeyNotFoundException("Η κατηγορία δεν βρέθηκε.");
 
-            if (category == null) return false;
+            var hasProducts = await _context.Products.AnyAsync(p => p.CategoryId == id);
+            if (hasProducts)
+            {
+                throw new InvalidOperationException("Δεν μπορείτε να διαγράψετε την κατηγορία γιατί περιέχει προϊόντα.");
+            }
 
             _context.Categories.Remove(category);
             await _context.SaveChangesAsync();
-            return true;
-        }
-
-        // Βοηθητική μέθοδος για έλεγχο διπλοεγγραφών
-        public async Task<bool> ExistsAsync(string userId, string name, int? excludeId = null)
-        {
-            return await _context.Categories
-                .AnyAsync(c => c.UserId == userId && c.Name == name && c.Id != excludeId);
         }
     }
 }

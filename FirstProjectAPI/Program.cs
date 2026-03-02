@@ -19,6 +19,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
+builder.Services.AddScoped<ISupplierService, SupplierService>();
 
 // Ρυθμίσεις για το Swagger (Swashbuckle) με υποστήριξη JWT
 builder.Services.AddSwaggerGen(options =>

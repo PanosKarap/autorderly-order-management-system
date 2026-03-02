@@ -1,17 +1,16 @@
-﻿namespace FirstProjectAPI.Models
+﻿using FirstProjectAPI.Models;
+
+public class Supplier
 {
-    public class Supplier
-    {
-        public int Id { get; set; }
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string? Address { get; set; }
+    public string? Email { get; set; }
+    public string? PhoneNumber { get; set; }
 
-        // SaaS: Σε ποιον χρήστη ανήκει αυτός ο προμηθευτής;
-        public string UserId { get; set; }
+    // Soft Delete Flag
+    public bool IsDeleted { get; set; } = false;
 
-        public List<Product> Products { get; set; } = new();
-        public string Name { get; set; }
-        public string Address { get; set; }
-        public string? Email { get; set; } // Το ? σημαίνει προαιρετικό
-        public string? PhoneNumber { get; set; }
-
-    }
+    public string UserId { get; set; } = string.Empty;
+    public ApplicationUser? User { get; set; }
 }

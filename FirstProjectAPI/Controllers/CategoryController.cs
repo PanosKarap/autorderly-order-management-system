@@ -1,6 +1,7 @@
 ﻿using FirstProjectAPI.DTOs;
 using FirstProjectAPI.Interfaces;
 using FirstProjectAPI.Services;
+using Humanizer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -30,42 +31,67 @@ namespace FirstProjectAPI.Controllers
             return Ok(categories);
         }
 
-        // --- POST: api/Categories/Create ---
         [HttpPost("Create")]
         public async Task<IActionResult> Create([FromBody] CategoryCreateDto dto)
         {
-            var userId = GetUserId();
-
-            if (await _categoryService.ExistsAsync(userId, dto.Name))
-                return BadRequest(new { Message = "Υπάρχει ήδη κατηγορία με αυτό το όνομα." });
-
-            await _categoryService.CreateAsync(dto, userId);
-            return Ok(new { Message = "Η κατηγορία δημιουργήθηκε επιτυχώς!"});
+            try
+            {
+                var userId = GetUserId();
+                var result = await _categoryService.CreateAsync(dto, userId);
+                return Ok(new
+                {
+                    Message = "Η κατηγορία δημιουργήθηκε επιτυχώς!",
+                    Data = result
+                });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
         }
 
         // --- PUT: api/Categories/Update/5 ---
         [HttpPut("Update/{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] CategoryUpdateDto dto)
         {
-            var userId = GetUserId();
-
-            if (await _categoryService.ExistsAsync(userId, dto.NewName, id))
-                return BadRequest(new { Message = "Το όνομα χρησιμοποιείται ήδη σε άλλη κατηγορία." });
-
-            var success = await _categoryService.UpdateAsync(id, dto, userId);
-            if (!success) return NotFound(new { Message = "Η κατηγορία δεν βρέθηκε ή δεν έχετε δικαίωμα πρόσβασης." });
-
-            return Ok(new { Message = "Το όνομα της κατηγορίας ενημερώθηκε." });
+            try
+            {
+                var userId = GetUserId();
+                var result = await _categoryService.UpdateAsync(id, dto, userId);
+                return Ok(new
+                {
+                    Message = "To όνομα της κατηγορίας ενημερώθηκε!",
+                    Data = result
+                });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { Message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
         }
 
         // --- DELETE: api/Categories/Delete/5 ---
         [HttpDelete("Delete/{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var success = await _categoryService.DeleteAsync(id, GetUserId());
-            if (!success) return NotFound(new { Message = "Η κατηγορία δεν βρέθηκε ή δεν έχετε δικαίωμα πρόσβασης." });
-
-            return Ok(new { Message = "Η κατηγορία διαγράφηκε οριστικά." });
+            try
+            {
+                var userId = GetUserId();
+                await _categoryService.DeleteAsync(id, userId);
+                return Ok(new { Message = "Η κατηγορία διαγράφηκε οριστικά." });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { Message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
         }
     }
 }
